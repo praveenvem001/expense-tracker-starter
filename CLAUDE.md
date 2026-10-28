@@ -24,17 +24,17 @@ Vite 7 requires **Node 20.19+ or 22.12+**. The machine's default `node` may be o
 
 ## Architecture
 
-The entire application is one component:
-
 - `src/main.jsx` — React 19 entry point; mounts `<App>` in `<StrictMode>` via `createRoot`.
-- `src/App.jsx` — **all app logic and markup live here.** A single `App` component holds every piece of state with `useState`:
-  - `transactions` — seeded with hardcoded sample data; this is the single source of truth.
-  - Form inputs (`description`, `amount`, `type`, `category`) and filters (`filterType`, `filterCategory`).
-  - Derived values (`totalIncome`, `totalExpenses`, `balance`, `filteredTransactions`) are computed inline on each render from `transactions` — there is no reducer, context, or external store.
-- `src/App.css` / `src/index.css` — styling.
+- `src/App.jsx` — the owner/container. Holds `transactions` (seeded with hardcoded sample data — the single source of truth) and the shared `categories` list, exposes `addTransaction`, and composes the three child components. It holds no form or filter state itself.
+- `src/components/Summary.jsx` — receives `transactions` and derives `totalIncome`, `totalExpenses`, and `balance` on each render (no own state).
+- `src/components/TransactionForm.jsx` — owns the form field state (`description`, `amount`, `type`, `category`), validates and builds a new transaction, then calls the `onAdd` prop and resets. Receives `categories`.
+- `src/components/TransactionList.jsx` — owns the filter state (`filterType`, `filterCategory`) and the filtering logic. Receives `transactions` and `categories`, renders the filters and table.
+- `src/App.css` / `src/index.css` — styling (shared class names like `summary-card`, `income-amount`, etc. are relied on across components).
 
-State is entirely in-memory: there is no backend, routing, or persistence, so **data resets on page reload**. A transaction is `{ id, description, amount, type ("income"|"expense"), category, date }`.
+State ownership pattern: `App` owns the data; each child owns the UI state it alone uses. State flows down as props and changes flow up through the `onAdd` callback. There is no reducer, context, or external store.
 
-## Known intentional bug
+Everything is in-memory: no backend, routing, or persistence, so **data resets on page reload**. A transaction is `{ id, description, amount (number), type ("income"|"expense"), category, date }`.
 
-In `App.jsx`, `amount` is stored as a **string** (from the number input and the seed data). The income/expense totals use `reduce((sum, t) => sum + t.amount, 0)`, so string concatenation corrupts the sums instead of adding numbers. Fixing this (coercing `amount` to a number) is one of the course's exercises — expect to encounter and address it.
+## The amount-as-number invariant
+
+`amount` must stay a **number** throughout. This was originally a bug — seed data and the form input produced strings, so `reduce((sum, t) => sum + t.amount, 0)` concatenated instead of summing. It's now fixed: seed amounts are numeric literals and `TransactionForm` coerces input with `Number(amount)` before calling `onAdd`. Preserve this when adding any new transaction source.
