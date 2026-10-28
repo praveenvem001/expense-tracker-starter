@@ -1,6 +1,5 @@
-import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const COLORS = ["#4f8cff", "#00c49f", "#ffbb28", "#ff8042", "#a259ff", "#ff6b9d", "#2dd4bf"];
+import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
+import { categoryColor, categoryLabel, formatMoney } from '../lib/format';
 
 function CategoryChart({ transactions }) {
   // Aggregate expense amounts by category
@@ -11,34 +10,49 @@ function CategoryChart({ transactions }) {
       return acc;
     }, {});
 
-  const data = Object.entries(byCategory).map(([name, value]) => ({ name, value }));
-
-  if (data.length === 0) {
-    return (
-      <div className="chart">
-        <h2>Spending by Category</h2>
-        <p className="chart-empty">No expenses to chart yet.</p>
-      </div>
-    );
-  }
+  const data = Object.entries(byCategory)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
 
   return (
-    <div className="chart">
-      <h2>Spending by Category</h2>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" />
-          <YAxis tickFormatter={(value) => `$${value}`} />
-          <Tooltip formatter={(value) => `$${value}`} cursor={{ fill: "rgba(0,0,0,0.05)" }} />
-          <Bar dataKey="value" name="Spending">
-            {data.map((entry, index) => (
-              <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <section className="panel chart">
+      <h2>Where it went</h2>
+      {data.length === 0 ? (
+        <p className="empty">Spending by category shows up here once you add an expense.</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={data.length * 36 + 8}>
+          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 64, left: 0, bottom: 4 }}>
+            <XAxis type="number" hide />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={96}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={categoryLabel}
+              tick={{ fill: "var(--ink-muted)", fontSize: 13 }}
+            />
+            <Tooltip
+              formatter={(value) => [formatMoney(value), "Spent"]}
+              labelFormatter={categoryLabel}
+              cursor={{ fill: "var(--fog)" }}
+              contentStyle={{ borderRadius: 8, border: "1px solid var(--line)", fontSize: 13 }}
+            />
+            <Bar dataKey="value" barSize={14} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+              {data.map(entry => (
+                <Cell key={entry.name} fill={categoryColor(entry.name)} />
+              ))}
+              <LabelList
+                dataKey="value"
+                position="right"
+                formatter={formatMoney}
+                style={{ fill: "var(--ink)", fontSize: 13, fontVariantNumeric: "tabular-nums" }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </section>
   );
 }
 

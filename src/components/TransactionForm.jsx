@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { categoryLabel } from '../lib/format';
 
 function TransactionForm({ categories, onAdd }) {
   const [description, setDescription] = useState("");
@@ -26,33 +27,63 @@ function TransactionForm({ categories, onAdd }) {
   };
 
   return (
-    <div className="add-transaction">
-      <h2>Add Transaction</h2>
+    <section className="add-transaction">
+      <h2>Add a transaction</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <select value={type} onChange={(e) => setType(e.target.value)}>
-          <option value="income">Income</option>
-          <option value="expense">Expense</option>
-        </select>
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+        <fieldset className="type-toggle">
+          <legend className="visually-hidden">Type</legend>
+          {["expense", "income"].map(option => (
+            <label key={option} className={type === option ? `is-selected is-${option}` : undefined}>
+              <input
+                type="radio"
+                name="type"
+                value={option}
+                checked={type === option}
+                onChange={(e) => setType(e.target.value)}
+              />
+              {option === "expense" ? "Expense" : "Income"}
+            </label>
           ))}
-        </select>
-        <button type="submit">Add</button>
+        </fieldset>
+
+        <label className="field">
+          <span>Description</span>
+          <input
+            type="text"
+            placeholder="e.g. Coffee with Sam"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+        </label>
+
+        <div className="field-row">
+          <label className="field">
+            <span>Amount</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
+          </label>
+          <label className="field">
+            <span>Category</span>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{categoryLabel(cat)}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <button type="submit" className="primary-btn">Add {type}</button>
       </form>
-    </div>
+    </section>
   );
 }
 

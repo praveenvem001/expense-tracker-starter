@@ -1,3 +1,5 @@
+import { categoryColor, categoryLabel, formatMoney } from '../lib/format';
+
 function Summary({ transactions }) {
   const totalIncome = transactions
     .filter(t => t.type === "income")
@@ -9,21 +11,73 @@ function Summary({ transactions }) {
 
   const balance = totalIncome - totalExpenses;
 
+  // Spending per category, largest first, for the flow strip
+  const spending = Object.entries(
+    transactions
+      .filter(t => t.type === "expense")
+      .reduce((acc, t) => {
+        acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
+        return acc;
+      }, {})
+  ).sort((a, b) => b[1] - a[1]);
+
+  let headline;
+  if (totalIncome === 0 && totalExpenses === 0) {
+    headline = "Nothing tracked yet. Add your first transaction to see where your money goes.";
+  } else if (balance >= 0) {
+    headline = `You've kept ${formatMoney(balance)} of the ${formatMoney(totalIncome)} that came in.`;
+  } else {
+    headline = `You've spent ${formatMoney(-balance)} more than came in.`;
+  }
+
+  // The strip spans whichever is larger, so overspending fills it entirely
+  const scale = Math.max(totalIncome, totalExpenses) || 1;
+  const segments = [
+    ...spending.map(([category, value]) => ({
+      key: category,
+      label: categoryLabel(category),
+      value,
+      color: categoryColor(category),
+    })),
+    ...(balance > 0 ? [{ key: "left-over", label: "Left over", value: balance, color: null }] : []),
+  ];
+
   return (
-    <div className="summary">
-      <div className="summary-card">
-        <h3>Income</h3>
-        <p className="income-amount">${totalIncome}</p>
-      </div>
-      <div className="summary-card">
-        <h3>Expenses</h3>
-        <p className="expense-amount">${totalExpenses}</p>
-      </div>
-      <div className="summary-card">
-        <h3>Balance</h3>
-        <p className="balance-amount">${balance}</p>
-      </div>
-    </div>
+    <section className="overview" aria-label="Overview">
+      <p className="overview-headline">{headline}</p>
+
+      {segments.length > 0 && (
+        <div
+          className="flow"
+          role="img"
+          aria-label={segments.map(s => `${s.label} ${formatMoney(s.value)}`).join(", ")}
+        >
+          {segments.map(s => (
+            <span
+              key={s.key}
+              className={s.color ? "flow-segment" : "flow-segment flow-segment--rest"}
+              style={{ flexGrow: s.value / scale, background: s.color ?? undefined }}
+              title={`${s.label}: ${formatMoney(s.value)}`}
+            />
+          ))}
+        </div>
+      )}
+
+      <dl className="totals">
+        <div>
+          <dt>Came in</dt>
+          <dd className="income-amount">{formatMoney(totalIncome)}</dd>
+        </div>
+        <div>
+          <dt>Went out</dt>
+          <dd className="expense-amount">{formatMoney(totalExpenses)}</dd>
+        </div>
+        <div>
+          <dt>Balance</dt>
+          <dd className="balance-amount">{formatMoney(balance)}</dd>
+        </div>
+      </dl>
+    </section>
   );
 }
 
