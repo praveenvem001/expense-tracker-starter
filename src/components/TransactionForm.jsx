@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { categoryLabel } from '../lib/format';
+import { categoryLabel, todayISO } from '../lib/format';
 
 function TransactionForm({ categories, onAdd }) {
   const [description, setDescription] = useState("");
@@ -9,15 +9,17 @@ function TransactionForm({ categories, onAdd }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!description || !amount) return;
+    const text = description.trim();
+    const value = Number(amount);
+    if (!text || !Number.isFinite(value) || value <= 0) return;
 
     onAdd({
-      id: Date.now(),
-      description,
-      amount: Number(amount),
+      id: crypto.randomUUID(),
+      description: text,
+      amount: value,
       type,
       category,
-      date: new Date().toISOString().split('T')[0],
+      date: todayISO(),
     });
 
     setDescription("");

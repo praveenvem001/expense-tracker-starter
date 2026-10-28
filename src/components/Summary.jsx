@@ -1,25 +1,19 @@
 import { categoryColor, categoryLabel, formatMoney } from '../lib/format';
+import { spendingByCategory } from '../lib/transactions';
 
 function Summary({ transactions }) {
   const totalIncome = transactions
     .filter(t => t.type === "income")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const totalExpenses = transactions
     .filter(t => t.type === "expense")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpenses;
 
   // Spending per category, largest first, for the flow strip
-  const spending = Object.entries(
-    transactions
-      .filter(t => t.type === "expense")
-      .reduce((acc, t) => {
-        acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
-        return acc;
-      }, {})
-  ).sort((a, b) => b[1] - a[1]);
+  const spending = spendingByCategory(transactions);
 
   let headline;
   if (totalIncome === 0 && totalExpenses === 0) {

@@ -1,12 +1,15 @@
+// Key order is the order categories appear in dropdowns
 export const CATEGORY_COLORS = {
-  housing: "#34528F",
   food: "#C98A2B",
+  housing: "#34528F",
   utilities: "#2B8A86",
   transport: "#7656A3",
   entertainment: "#BF5277",
   salary: "#5D7D36",
   other: "#8A929C",
 };
+
+export const CATEGORIES = Object.keys(CATEGORY_COLORS);
 
 export const categoryColor = (category) => CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other;
 
@@ -24,4 +27,11 @@ export const formatMoney = (value) =>
 export const formatDate = (isoDate) => {
   const [y, m, d] = isoDate.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
+// Today's date as "YYYY-MM-DD" in local time (toISOString would give the UTC date)
+export const todayISO = () => {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 };

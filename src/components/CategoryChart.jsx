@@ -1,18 +1,9 @@
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
 import { categoryColor, categoryLabel, formatMoney } from '../lib/format';
+import { spendingByCategory } from '../lib/transactions';
 
 function CategoryChart({ transactions }) {
-  // Aggregate expense amounts by category
-  const byCategory = transactions
-    .filter(t => t.type === "expense")
-    .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
-      return acc;
-    }, {});
-
-  const data = Object.entries(byCategory)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
+  const data = spendingByCategory(transactions).map(([name, value]) => ({ name, value }));
 
   return (
     <section className="panel chart">
